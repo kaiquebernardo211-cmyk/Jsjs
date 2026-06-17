@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus Security Login</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #050505;
+            color: #00ff33;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* TELA DE LOGIN FALSO */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            border: 1px solid #00ff33;
+            background: #111;
+            padding: 30px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 0 15px rgba(0, 255, 51, 0.2);
+            text-align: center;
+        }
+
+        .login-box h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px #00ff33;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .login-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #00ff33;
+            color: #00ff33;
+            padding: 10px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #00ff33;
+            color: #000;
+            border: none;
+            padding: 12px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .login-btn:active {
+            background: #00b324;
+        }
+
+        .hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
+        }
+
+        /* TERMINAL PRINCIPAL (Inicia Oculto) */
+        .main-interface {
+            display: none; /* Só aparece após o login */
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-bar {
+            background: #111;
+            padding: 8px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #00ff33;
+        }
+
+        .terminal {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .output-line {
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .prompt {
+            color: #ff0055;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .cmd-input {
+            background: transparent;
+            border: none;
+            color: #00ff33;
+            font-family: inherit;
+            font-size: 14px;
+            flex: 1;
+            outline: none;
+        }
+
+        /* Teclado Virtual */
+        .keyboard {
+            background: #111;
+            border-top: 1px solid #00ff33;
+            padding: 5px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+        }
+
+        .key {
+            background: #222;
+            border: 1px solid #333;
+            color: #00ff33;
+            padding: 12px 0;
+            text-align: center;
+            font-size: 13px;
+            border-radius: 4px;
+            user-select: none;
+        }
+
+        .key:active {
+            background: #00ff33;
+            color: #000;
+        }
+
+        .key.wide {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN FALSO -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h2>SISTEMA CRIPTOGRAFADO</h2>
+            <div class="input-group">
+                <label>OPERADOR (USER):</label>
+                <input type="text" id="userInput" class="login-input" placeholder="admin" value="admin">
+            </div>
+            <div class="input-group">
+                <label>CHAVE DE ACESSO (PASSWORD):</label>
+                <input type="password" id="passInput" class="login-input" placeholder="Digite a senha...">
+            </div>
+            <button class="login-btn" onclick="checkLogin()">CONECTAR</button>
+            <div class="hint">Dica: A senha padrão de fábrica é <span style="color: #fff;">nexus2026</span></div>
+        </div>
+    </div>
+
+    <!-- RECIPIENTE DA INTERFACE DO TERMINAL -->
+    <div class="main-interface" id="mainInterface">
+        <div class="top-bar">
+            <span>[STATUS: AUTENTICADO]</span>
+            <span>IP: 192.168.88.254</span>
+            <span id="clock">00:00:00</span>
+        </div>
+
+        <div class="terminal" id="terminal" onclick="document.getElementById('cmdInput').focus()">
+            <div id="output">
+                <div class="output-line">========================================</div>
+                <div class="output-line">   NEXUS HACKING INTERFACE v4.50        </div>
+                <div class="output-line">========================================</div>
+                <div class="output-line">Acesso liberado. Digite <span style="color:#fff">help</span> para comandos.</div>
+                <div class="output-line"></div>
+            </div>
+            <div class="input-line">
+                <span class="prompt">root@nexus:~#</span>
+                <input type="text" id="cmdInput" class="cmd-input" autocomplete="off">
+            </div>
+        </div>
+
+        <div class="keyboard">
+            <div class="key" onclick="press('help')">HELP</div>
+            <div class="key" onclick="press('scan')">SCAN</div>
+            <div class="key" onclick="press('clear')">CLS</div>
+            <div class="key" onclick="press('system')">SYS</div>
+            <div class="key wide" onclick="sendCmd()">ENTER</div>
+        </div>
+    </div>
+
+    <script>
+        // Função para validar o Login
+        function checkLogin() {
+            const user = document.getElementById('userInput').value;
+            const pass = document.getElementById('passInput').value;
+
+            // Define a credencial simulada
+            if (user === 'admin' && pass === 'nexus2026') {
+                // Esconde a tela de login e mostra o simulador
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainInterface').style.display = 'flex';
+                document.getElementById('cmdInput').focus();
+            } else {
+                alert('ACESSO NEGADO: Credenciais incorretas.');
+            }
+        }
+
+        // Sistema do Terminal
+        const input = document.getElementById('cmdInput');
+        const output = document.getElementById('output');
+        const terminal = document.getElementById('terminal');
+
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toTimeString().split(' ');
+        }, 1000);
+
+        function press(cmd) {
+            input.value = cmd;
+            input.focus();
+        }
+
+        function sendCmd() {
+            handleCommand(input.value);
+        }
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleCommand(input.value);
+        });
+
+        function handleCommand(cmdText) {
+            const cmd = cmdText.trim().toLowerCase();
+            if (!cmd) return;
+
+            printLine(`root@nexus:~# ${cmdText}`, '#ff0055');
+            input.value = '';
+
+            switch(cmd) {
+                case 'help':
+                    printLine('Comandos:\n > scan : Procura vulnerabilidades.\n > system : Status da máquina.\n > clear : Limpa tela.');
+                    break;
+                case 'scan':
+                    printLine('Varrendo conexões... Nenhuma ameaça detectada.');
+                    break;
+                case 'system':
+                    printLine('SISTEMA: OK\nCRYPT: SHA-256\nCONEXÃO: ESTÁVEL');
+                    break;
+                case 'clear':
+                    output.innerHTML = '';
+                    break;
+                default:
+                    printLine(`Comando inválido: "${cmdText}"`, '#ff3333');
+            }
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function printLine(text, color = '#00ff33') {
+            const line = document.createElement('div');
+            line.className = 'output-line';
+            line.style.color = color;
+            line.innerText = text;
+            output.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+    </script>
+</body>
+</html>
